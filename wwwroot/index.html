@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Knowledge Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #FFFFFF;
+            --bg-header: rgba(255, 255, 255, 0.95);
+            --bg-card: #FFFFFF;
+            --bg-surface: #F8FAFC;
+            --bg-input: #F1F5F9;
+            --border: #E2E8F0;
+            --border-hover: #CBD5E1;
+            --border-focus: #000000;
+            --text-main: #000000;
+            --text-sub: #334155;
+            --text-dim: #64748B;
+            --user-msg-bg: #000000;
+            --user-msg-text: #FFFFFF;
+            --bot-msg-bg: #F8FAFC;
+            --bot-msg-border: #E2E8F0;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Navigation Header */
+        header {
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            background: var(--bg-header);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            flex-shrink: 0;
+            z-index: 50;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: #000000;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .logo-text h1 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            color: var(--text-main);
+        }
+
+        .logo-text p {
+            font-size: 11.5px;
+            color: var(--text-dim);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 15px;
+            border-radius: var(--radius-full);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #000000;
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background: #1F2937;
+        }
+
+        .btn-secondary {
+            background: #F8FAFC;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-hover);
+            background: #F1F5F9;
+        }
+
+        /* Main Workspace Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 920px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .messages-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 20px 100px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            margin: auto;
+            text-align: center;
+            max-width: 580px;
+            padding: 30px 20px;
+        }
+
+        .empty-icon {
+            width: 54px;
+            height: 54px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+            color: #000000;
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .empty-state p {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .prompt-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .chip {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            padding: 8px 14px;
+            font-size: 12.5px;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: left;
+        }
+
+        .chip:hover {
+            border-color: #000000;
+            color: #000000;
+            background: var(--bg-surface);
+        }
+
+        /* Message Rows */
+        .message-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .message-row.user {
+            justify-content: flex-end;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .avatar.user-avatar {
+            background: #000000;
+            color: #FFFFFF;
+            order: 2;
+        }
+
+        .avatar.bot-avatar {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            color: #000000;
+        }
+
+        .bubble {
+            max-width: 82%;
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            line-height: 1.65;
+            position: relative;
+        }
+
+        .message-row.user .bubble {
+            background: var(--user-msg-bg);
+            color: var(--user-msg-text);
+            border-bottom-right-radius: 2px;
+        }
+
+        .message-row.bot .bubble {
+            background: var(--bot-msg-bg);
+            border: 1px solid var(--bot-msg-border);
+            color: var(--text-main);
+            border-bottom-left-radius: 2px;
+        }
+
+        /* Citations Accordion */
+        .citations-container {
+            margin-top: 14px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        .citations-header {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .citations-list {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .citation-item {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+
+        .citation-item:hover {
+            border-color: #000000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .citation-title {
+            font-weight: 600;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .citation-excerpt {
+            color: var(--text-dim);
+            font-size: 11.5px;
+            line-height: 1.4;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #64748B;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typingBounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Input Area at Bottom */
+        .input-box-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 35%);
+            padding: 20px 20px 24px 20px;
+        }
+
+        .input-box {
+            display: flex;
+            align-items: center;
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            padding: 6px 8px 6px 18px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .input-box:focus-within {
+            border-color: #000000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .input-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            background: transparent;
+            color: var(--text-main);
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #000000;
+            color: #FFFFFF;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #1F2937;
+        }
+
+        .send-btn:disabled {
+            background: #E2E8F0;
+            color: #94A3B8;
+            cursor: not-allowed;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 580px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: var(--text-dim);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        .form-input,
+        .form-select {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 9px 12px;
+            font-size: 13px;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: #000000;
+            background: #FFFFFF;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--bg-surface);
+            transition: all 0.15s ease;
+        }
+
+        .drop-zone:hover {
+            border-color: #000000;
+            background: #FFFFFF;
+        }
+
+        /* Floating Stage Timing Monitor */
+        .stage-timing-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 320px;
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            z-index: 60;
+            overflow: hidden;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .stage-timing-widget.minimized .timing-body {
+            display: none;
+        }
+
+        .timing-header {
+            padding: 10px 14px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .timing-header-title {
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .timing-badge {
+            background: #000000;
+            color: #FFFFFF;
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: var(--radius-full);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .timing-toggle-btn {
+            background: transparent;
+            border: none;
+            font-size: 10px;
+            cursor: pointer;
+            color: var(--text-dim);
+        }
+
+        .timing-body {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .timing-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-dim);
+            font-size: 11px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .timing-stage-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .timing-stage-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+        }
+
+        .timing-stage-name {
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .timing-stage-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .timing-bar-bg {
+            height: 4px;
+            background: #E2E8F0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .timing-bar-fill {
+            height: 100%;
+            background: #000000;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .timing-total-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 6px;
+            border-top: 1px solid var(--border);
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .timing-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            border-radius: 9999px;
+            padding: 3px 9px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #475569;
+            margin-top: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .timing-pill:hover {
+            background: #E2E8F0;
+            color: #000000;
+        }
+
+        /* Toast notification */
+        .alert-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000000;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo-area">
+            <div class="logo-badge">K</div>
+            <div class="logo-text">
+                <h1>Knowledge Assistant</h1>
+                <p>Enterprise Grounded AI</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <!-- PDF Ingestion Modal Button -->
+            <button id="uploadDocBtn" class="btn btn-primary" onclick="openUploadModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Ingest PDFs</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Chat Workspace -->
+    <main class="chat-container">
+
+        <!-- Messages Area -->
+        <div id="messagesList" class="messages-list">
+
+            <!-- Empty State / Welcome Screen -->
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <h2>Enterprise Knowledge Assistant</h2>
+                <p>
+                    Ask questions grounded in company documents, handbooks, and policy manuals with instant source
+                    verification.
+                </p>
+
+                <div class="prompt-chips">
+                    <button class="chip"
+                        onclick="askPredefined('What is the leave structure for Earned Leaves and Casual/Sick leaves?')">
+                        What is our Earned Leave & Sick Leave structure?
+                    </button>
+                    <button class="chip"
+                        onclick="askPredefined('How many public holidays are allowed and can leaves be carried forward or encashed?')">
+                        Public holidays & carry forward / encashment rules?
+                    </button>
+                    <button class="chip"
+                        onclick="askPredefined('What are the leave rules for employees on probation?')">
+                        Leave rules for employees on probation?
+                    </button>
+                    <button class="chip"
+                        onclick="askPredefined('What are the company guidelines regarding Code of Ethics and Asset Protection?')">
+                        Company Code of Ethics & Asset Protection?
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Input Box -->
+        <div class="input-box-wrapper">
+            <form id="chatForm" onsubmit="handleSendMessage(event)" class="input-box">
+                <input type="text" id="questionInput"
+                    placeholder="Ask a question about policies, leaves, code of ethics, or guidelines..."
+                    autocomplete="off" />
+                <button type="submit" id="sendBtn" class="send-btn" title="Send Question">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- PDF Upload & Ingestion Modal -->
+    <div id="uploadModal" class="modal-overlay" onclick="closeUploadModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Knowledge Document Ingestion
+                </h3>
+                <button class="close-btn" onclick="closeUploadModal()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Drop folder sync -->
+                <div
+                    style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div>
+                        <h4 style="font-size: 13px; font-weight: 700; color: #000000;">Sync Local Documents Folder</h4>
+                        <p style="font-size: 11.5px; color: var(--text-dim); margin-top: 2px;">Scans
+                            <code>backend/documents/</code> for newly added PDFs.
+                        </p>
+                    </div>
+                    <button id="syncFolderBtn" class="btn btn-secondary" onclick="triggerFolderSync()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        <span>Sync Folder</span>
+                    </button>
+                </div>
+
+                <!-- Direct PDF Upload Form -->
+                <form id="pdfUploadForm" onsubmit="handlePdfUpload(event)"
+                    style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-group">
+                        <label>Upload PDF Document</label>
+                        <div class="drop-zone" onclick="document.getElementById('pdfFileInput').click()">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000000"
+                                stroke-width="2" style="margin: 0 auto 6px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <line x1="9" y1="15" x2="15" y2="15"></line>
+                            </svg>
+                            <p id="fileLabel" style="font-size: 13px; font-weight: 600; color: #000000;">
+                                Click to select a PDF file
+                            </p>
+                            <span id="fileSizeLabel" style="font-size: 11px; color: var(--text-dim);">
+                                Supports multi-page PDF files
+                            </span>
+                            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;"
+                                onchange="onFileSelected(event)" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Document Title</label>
+                        <input type="text" id="docTitleInput" class="form-input"
+                            placeholder="e.g. Employee Policy Handbook 2027" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Department / Category</label>
+                        <input type="text" id="docDeptInput" class="form-input"
+                            placeholder="General, HR, Engineering..." value="General" />
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                        <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">
+                            Upload & Index PDF
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Reset Seed Data -->
+                <div
+                    style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px;">
+                    <div>
+                        <h4 style="font-size: 13px; font-weight: 700; color: #000000;">Purge Knowledge Base</h4>
+                        <p style="font-size: 11.5px; color: var(--text-dim); margin-top: 2px;">Wipes all documents and
+                            vectors from store.</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="triggerPurgeAll()">
+                        Purge All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chunks JSON Viewer Modal -->
+    <div id="chunksModal" class="modal-overlay" onclick="closeChunksModal(event)">
+        <div class="modal-card" style="max-width: 860px; height: 85vh;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    Document Chunks JSON (<span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">backend/chunks.json</span>)
+                </h3>
+                <button class="close-btn" onclick="closeChunksModal()">&times;</button>
+            </div>
+
+            <div
+                style="padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--bg-surface); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="chunksBadgeCount"
+                        style="padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; background: #FFFFFF; border: 1px solid var(--border);">Loading...</span>
+                    <span style="color: var(--text-dim); font-size: 11.5px;">Live JSON with 384-d vector
+                        embeddings</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" onclick="copyChunksJson()" id="copyChunksBtn"
+                        style="padding: 5px 12px; font-size: 11.5px;">
+                        Copy JSON
+                    </button>
+                    <a href="/api/documents/chunks?download=true" class="btn btn-primary" download="chunks.json"
+                        style="padding: 5px 12px; font-size: 11.5px;">
+                        Download chunks.json
+                    </a>
+                </div>
+            </div>
+
+            <div
+                style="padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: #FFFFFF;">
+                <input type="text" id="chunksFilterInput"
+                    placeholder="Filter chunks by document title or content text..." oninput="filterChunksJson()"
+                    style="flex: 1; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; outline: none;" />
+            </div>
+
+            <div class="modal-body" style="padding: 16px 20px; flex: 1; overflow-y: auto; background: #FAFAFA;">
+                <pre id="chunksJsonDisplay"
+                    style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.5; color: #0F172A; white-space: pre-wrap; word-break: break-word;">Loading chunks JSON...</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Stage Timing & Latency Widget (Bottom-Right Corner) -->
+    <aside id="stageTimingWidget" class="stage-timing-widget" aria-label="Pipeline Stage Execution Monitor">
+        <div class="timing-header" onclick="toggleTimingWidget()">
+            <div class="timing-header-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Stage Timing Monitor</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="timingTotalBadge" class="timing-badge">Ready (0 ms)</span>
+                <button type="button" class="timing-toggle-btn" id="timingToggleBtn" title="Minimize / Expand">
+                    <span id="timingToggleIcon">&#9660;</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="timing-body" id="timingBody">
+            <div class="timing-status-row">
+                <span id="timingStatusLabel">⚡ Standby · Awaiting Query</span>
+                <span id="timingLastTimestamp"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">--:--:--</span>
+            </div>
+
+            <!-- Stage 1: Query Embedding -->
+            <div class="timing-stage-item">
+                <div class="timing-stage-meta">
+                    <span class="timing-stage-name">🧬 1. Embedding (bge-small)</span>
+                    <span id="timeEmbedding" class="timing-stage-val">0 ms</span>
+                </div>
+                <div class="timing-bar-bg">
+                    <div id="barEmbedding" class="timing-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Stage 2: Vector Search (FAISS) -->
+            <div class="timing-stage-item">
+                <div class="timing-stage-meta">
+                    <span class="timing-stage-name">🔍 2. Vector Search (FAISS)</span>
+                    <span id="timeVector" class="timing-stage-val">0 ms</span>
+                </div>
+                <div class="timing-bar-bg">
+                    <div id="barVector" class="timing-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Stage 3: LLM Generation (Qwen 2.5 1.5B) -->
+            <div class="timing-stage-item">
+                <div class="timing-stage-meta">
+                    <span class="timing-stage-name">🤖 3. LLM Answer (Qwen 2.5 1.5B)</span>
+                    <span id="timeLlm" class="timing-stage-val">0 ms</span>
+                </div>
+                <div class="timing-bar-bg">
+                    <div id="barLlm" class="timing-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Stage 4: Citations & Formatting -->
+            <div class="timing-stage-item">
+                <div class="timing-stage-meta">
+                    <span class="timing-stage-name">📝 4. Citations & Post-Process</span>
+                    <span id="timePost" class="timing-stage-val">0 ms</span>
+                </div>
+                <div class="timing-bar-bg">
+                    <div id="barPost" class="timing-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Total Latency Summary -->
+            <div class="timing-total-row">
+                <span>Total Response Time:</span>
+                <span id="timeTotal"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800;">0 ms</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="alert-toast"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let selectedFile = null;
+        let timingProgressInterval = null;
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 3500);
+        }
+
+        function askPredefined(question) {
+            document.getElementById("questionInput").value = question;
+            document.getElementById("chatForm").dispatchEvent(new Event("submit"));
+        }
+
+        // --- Stage Timing Widget Controls ---
+        function toggleTimingWidget(forceOpen = false) {
+            const widget = document.getElementById("stageTimingWidget");
+            const icon = document.getElementById("timingToggleIcon");
+            if (forceOpen) {
+                widget.classList.remove("minimized");
+                icon.innerHTML = "&#9660;";
+                return;
+            }
+            widget.classList.toggle("minimized");
+            if (widget.classList.contains("minimized")) {
+                icon.innerHTML = "&#9650;";
+            } else {
+                icon.innerHTML = "&#9660;";
+            }
+        }
+
+        function startTimingProgress() {
+            toggleTimingWidget(true);
+            const statusLabel = document.getElementById("timingStatusLabel");
+            const totalBadge = document.getElementById("timingTotalBadge");
+            const startTime = Date.now();
+
+            const stages = [
+                "🧬 Step 1/4: Encoding Dense Vector Embedding...",
+                "🔍 Step 2/4: FAISS Vector Index Similarity Search...",
+                "🤖 Step 3/4: Ollama Qwen 2.5 1.5B Grounded Generation...",
+                "📝 Step 4/4: Assembling Grounded Citations & Audit Log..."
+            ];
+            let stageIndex = 0;
+
+            if (timingProgressInterval) clearInterval(timingProgressInterval);
+
+            timingProgressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                totalBadge.innerText = `Processing (${elapsed.toLocaleString()} ms)`;
+                if (elapsed > 600 && stageIndex < 1) stageIndex = 1;
+                if (elapsed > 1800 && stageIndex < 2) stageIndex = 2;
+                if (elapsed > 8000 && stageIndex < 3) stageIndex = 3;
+
+                statusLabel.innerText = stages[stageIndex];
+            }, 100);
+        }
+
+        function updateTimingWidget(data) {
+            if (timingProgressInterval) {
+                clearInterval(timingProgressInterval);
+                timingProgressInterval = null;
+            }
+
+            const metrics = data.performanceMetrics || {};
+            const timings = data.stageTimingsMs || {};
+
+            const totalMs = metrics.totalDurationMs || data.executionTimeMs || timings.totalExecutionMs || 0;
+            const embedMs = metrics.embeddingDurationMs || timings.embeddingMs || 0;
+            const vectorMs = metrics.vectorSearchDurationMs || timings.vectorSearchMs || 0;
+            const llmMs = metrics.llmGenerationDurationMs || timings.llmGenerationMs || 0;
+            const postMs = metrics.postProcessingDurationMs || timings.postProcessingMs || 0;
+
+            const sumMs = Math.max(1, embedMs + vectorMs + llmMs + postMs);
+
+            // Update text labels
+            document.getElementById("timeEmbedding").innerText = `${embedMs.toLocaleString()} ms (${Math.round((embedMs / sumMs) * 100)}%)`;
+            document.getElementById("timeVector").innerText = `${vectorMs.toLocaleString()} ms (${Math.round((vectorMs / sumMs) * 100)}%)`;
+            document.getElementById("timeLlm").innerText = `${llmMs.toLocaleString()} ms (${Math.round((llmMs / sumMs) * 100)}%)`;
+            document.getElementById("timePost").innerText = `${postMs.toLocaleString()} ms (${Math.round((postMs / sumMs) * 100)}%)`;
+            document.getElementById("timeTotal").innerText = `${totalMs.toLocaleString()} ms`;
+
+            // Update percentage bars
+            document.getElementById("barEmbedding").style.width = `${Math.min(100, Math.max(2, (embedMs / sumMs) * 100))}%`;
+            document.getElementById("barVector").style.width = `${Math.min(100, Math.max(2, (vectorMs / sumMs) * 100))}%`;
+            document.getElementById("barLlm").style.width = `${Math.min(100, Math.max(2, (llmMs / sumMs) * 100))}%`;
+            document.getElementById("barPost").style.width = `${Math.min(100, Math.max(2, (postMs / sumMs) * 100))}%`;
+
+            // Update header badge and status
+            document.getElementById("timingTotalBadge").innerText = `${totalMs.toLocaleString()} ms`;
+            document.getElementById("timingStatusLabel").innerText = `✅ Query completed in ${totalMs.toLocaleString()} ms`;
+            const now = new Date();
+            document.getElementById("timingLastTimestamp").innerText = now.toTimeString().split(" ")[0];
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById("questionInput");
+            const question = input.value.trim();
+            if (!question) return;
+
+            input.value = "";
+            const messagesList = document.getElementById("messagesList");
+            const emptyState = document.getElementById("emptyState");
+            if (emptyState) emptyState.remove();
+
+            appendUserMessage(question);
+            messagesList.scrollTop = messagesList.scrollHeight;
+
+            const loadingRow = appendLoadingIndicator();
+            messagesList.scrollTop = messagesList.scrollHeight;
+
+            // Start Corner Stage Timing Monitor
+            startTimingProgress();
+
+            try {
+                const res = await fetch(`${API_BASE}/api/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        question,
+                        topK: 5
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}: Failed to process chat.`);
+                }
+
+                const data = await res.json();
+                loadingRow.remove();
+                appendBotMessage(data);
+                updateTimingWidget(data);
+            } catch (err) {
+                loadingRow.remove();
+                if (timingProgressInterval) {
+                    clearInterval(timingProgressInterval);
+                    timingProgressInterval = null;
+                }
+                document.getElementById("timingStatusLabel").innerText = "❌ Query failed or timed out";
+                appendErrorMessage(err.message || "Failed to reach knowledge assistant.");
+            } finally {
+                messagesList.scrollTop = messagesList.scrollHeight;
+            }
+        }
+
+        function appendUserMessage(text) {
+            const list = document.getElementById("messagesList");
+            const row = document.createElement("div");
+            row.className = "message-row user";
+            row.innerHTML = `
+                <div class="avatar user-avatar">U</div>
+                <div class="bubble">${escapeHtml(text)}</div>
+            `;
+            list.appendChild(row);
+        }
+
+        function appendLoadingIndicator() {
+            const list = document.getElementById("messagesList");
+            const row = document.createElement("div");
+            row.className = "message-row bot";
+            row.innerHTML = `
+                <div class="avatar bot-avatar">AI</div>
+                <div class="bubble typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            list.appendChild(row);
+            return row;
+        }
+
+        function appendBotMessage(data) {
+            const list = document.getElementById("messagesList");
+            const row = document.createElement("div");
+            row.className = "message-row bot";
+
+            let formattedAnswer = formatMarkdown(data.answer);
+
+            // In-message Timing Pill
+            const totalMs = data.executionTimeMs || (data.performanceMetrics && data.performanceMetrics.totalDurationMs) || 0;
+            const timingPillHtml = `
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+                    <div class="timing-pill" onclick="toggleTimingWidget(true)" title="Click to inspect per-stage execution times in corner monitor">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Pipeline: ${totalMs.toLocaleString()} ms</span>
+                    </div>
+                </div>
+            `;
+
+            row.innerHTML = `
+                <div class="avatar bot-avatar">AI</div>
+                <div class="bubble">
+                    ${formattedAnswer}
+                    ${timingPillHtml}
+                </div>
+            `;
+            list.appendChild(row);
+        }
+
+        function appendErrorMessage(errorMsg) {
+            const list = document.getElementById("messagesList");
+            const row = document.createElement("div");
+            row.className = "message-row bot";
+            row.innerHTML = `
+                <div class="avatar bot-avatar">!</div>
+                <div class="bubble" style="border-color: #FCA5A5; color: #991B1B; background: #FEF2F2;">
+                    <strong>Notice:</strong> ${escapeHtml(errorMsg)}
+                </div>
+            `;
+            list.appendChild(row);
+        }
+
+        function toggleCitations(headerEl) {
+            const listEl = headerEl.nextElementSibling;
+            if (listEl) {
+                listEl.style.display = listEl.style.display === "none" ? "flex" : "none";
+            }
+        }
+
+        // Modal Controls
+        function openUploadModal() {
+            document.getElementById("uploadModal").style.display = "flex";
+        }
+
+        function closeUploadModal(e) {
+            if (e && e.target && e.target.id !== "uploadModal" && !e.target.classList.contains("close-btn")) return;
+            document.getElementById("uploadModal").style.display = "none";
+        }
+
+        // Chunks JSON Modal Controls
+        let allChunksData = null;
+
+        function closeChunksModal(e) {
+            if (e && e.target && e.target.id !== "chunksModal" && !e.target.classList.contains("close-btn")) return;
+            document.getElementById("chunksModal").style.display = "none";
+        }
+
+        function filterChunksJson() {
+            if (!allChunksData) return;
+            const query = document.getElementById("chunksFilterInput").value.trim().toLowerCase();
+            const display = document.getElementById("chunksJsonDisplay");
+
+            if (!query) {
+                display.innerText = JSON.stringify(allChunksData, null, 2);
+                return;
+            }
+
+            const filteredChunks = allChunksData.chunks.filter(c =>
+                (c.documentTitle && c.documentTitle.toLowerCase().includes(query)) ||
+                (c.chunkText && c.chunkText.toLowerCase().includes(query)) ||
+                (c.department && c.department.toLowerCase().includes(query))
+            );
+
+            const filteredData = {
+                ...allChunksData,
+                filterQuery: query,
+                matchingChunks: filteredChunks.length,
+                chunks: filteredChunks
+            };
+
+            display.innerText = JSON.stringify(filteredData, null, 2);
+        }
+
+        function copyChunksJson() {
+            const display = document.getElementById("chunksJsonDisplay");
+            navigator.clipboard.writeText(display.innerText).then(() => {
+                const btn = document.getElementById("copyChunksBtn");
+                const old = btn.innerText;
+                btn.innerText = "Copied!";
+                setTimeout(() => { btn.innerText = old; }, 2000);
+            });
+        }
+
+        function onFileSelected(e) {
+            if (e.target.files && e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                document.getElementById("fileLabel").innerText = selectedFile.name;
+                document.getElementById("fileSizeLabel").innerText = `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`;
+
+                const titleInput = document.getElementById("docTitleInput");
+                if (!titleInput.value) {
+                    titleInput.value = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+                }
+            }
+        }
+
+        async function handlePdfUpload(e) {
+            e.preventDefault();
+            if (!selectedFile) {
+                alert("Please select a PDF file first");
+                return;
+            }
+
+            const submitBtn = document.getElementById("uploadSubmitBtn");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Extracting & Indexing...";
+
+            try {
+                const formData = new FormData();
+                formData.append("file", selectedFile);
+                formData.append("title", document.getElementById("docTitleInput").value);
+                formData.append("department", document.getElementById("docDeptInput").value);
+
+                const res = await fetch(`${API_BASE}/api/documents/upload-pdf`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || "Upload failed");
+                }
+
+                showToast(`PDF "${selectedFile.name}" indexed successfully!`);
+                closeUploadModal();
+                // Reset form
+                selectedFile = null;
+                document.getElementById("pdfUploadForm").reset();
+                document.getElementById("fileLabel").innerText = "Click to select a PDF file";
+                document.getElementById("fileSizeLabel").innerText = "Supports multi-page PDF files";
+            } catch (err) {
+                showToast(err.message || "Failed to upload PDF");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Upload & Index PDF";
+            }
+        }
+
+        async function triggerFolderSync() {
+            const btn = document.getElementById("syncFolderBtn");
+            btn.disabled = true;
+            btn.innerText = "Scanning...";
+
+            try {
+                const res = await fetch(`${API_BASE}/api/documents/scan-folder`, { method: "POST" });
+                const data = await res.json();
+                showToast(data.message || "Folder scan completed.");
+            } catch (err) {
+                showToast("Failed to scan folder");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg><span>Sync Folder</span>`;
+            }
+        }
+
+        async function triggerPurgeAll() {
+            if (!confirm("Are you sure you want to PURGE ALL seeded and indexed documents?")) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/documents/purge-all`, { method: "POST" });
+                const data = await res.json();
+                showToast(data.message || "Knowledge base purged.");
+                closeUploadModal();
+            } catch (err) {
+                showToast("Failed to purge documents");
+            }
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatMarkdown(text) {
+            if (!text) return "";
+
+            // Normalize newlines
+            let str = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+            // Escape HTML characters
+            let html = escapeHtml(str);
+
+            // Bold text
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Headings
+            html = html.replace(/^### (.*?)$/gm, '<h3 style="font-size: 15px; font-weight: 700; color: #000000; margin: 12px 0 6px 0;">$1</h3>');
+            html = html.replace(/^## (.*?)$/gm, '<h2 style="font-size: 16px; font-weight: 700; color: #000000; margin: 14px 0 6px 0;">$1</h2>');
+            html = html.replace(/^# (.*?)$/gm, '<h1 style="font-size: 17px; font-weight: 700; color: #000000; margin: 16px 0 8px 0;">$1</h1>');
+
+            // Blockquotes
+            html = html.replace(/^> (.*?)$/gm, '<blockquote style="border-left: 3px solid #CBD5E1; padding-left: 10px; margin: 8px 0; color: #475569; background: #F8FAFC; border-radius: 0 4px 4px 0;">$1</blockquote>');
+
+            // Bullet list items
+            html = html.replace(/^[-•*] (.*?)$/gm, '<li style="margin-bottom: 6px; line-height: 1.5; color: #1E293B;">$1</li>');
+
+            // Group consecutive <li> into <ul>
+            html = html.replace(/((?:<li[^>]*>.*?<\/li>\s*)+)/gs, '<ul style="margin: 8px 0 10px 20px; padding-left: 0; list-style-type: disc; color: #1E293B;">$1</ul>');
+
+            // Paragraph breaks
+            html = html.replace(/\n\n+/g, '<br/><br/>');
+            html = html.replace(/(?<!<\/li>|<\/ul>|<\/h[1-3]>|<\/blockquote>)\n/g, '<br/>');
+
+            return html;
+        }
+    </script>
+</body>
+
+</html>
